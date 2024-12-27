@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">{{ article.title if article else '新建文章' }}</h2>
+                    
+                    <form method="POST" class="article-form">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">标题</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ article.title if article else '' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">分类</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">选择分类</option>
+                                <option value="中医基础" {% if article and article.category == '中医基础' %}selected{% endif %}>中医基础</option>
+                                <option value="方剂学" {% if article and article.category == '方剂学' %}selected{% endif %}>方剂学</option>
+                                <option value="诊断学" {% if article and article.category == '诊断学' %}selected{% endif %}>诊断学</option>
+                                <option value="养生保健" {% if article and article.category == '养生保健' %}selected{% endif %}>养生保健</option>
+                                <option value="临床经验" {% if article and article.category == '临床经验' %}selected{% endif %}>临床经验</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="summary" class="form-label">摘要</label>
+                            <textarea class="form-control" id="summary" name="summary" rows="3">{{ article.summary if article else '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="content" class="form-label">内容</label>
+                            <textarea class="form-control" id="content" name="content" rows="10" required>{{ article.content if article else '' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
+<script>
+    ClassicEditor
+        .create(document.querySelector('#content'), {
+            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'outdent', 'indent', '|', 'blockQuote', 'insertTable', 'undo', 'redo']
+        })
+        .catch(error => {
+            console.error(error);
+        });
+</script>
+{% endblock %}

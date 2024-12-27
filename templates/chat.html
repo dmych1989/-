@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- 侧边栏 -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <button class="btn btn-primary w-100" id="newChat">
+                <i class="bi bi-plus-lg"></i> 新对话
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <div class="conversations-list" id="conversationsList"></div>
+            <div class="chat-settings">
+                <div class="settings-header" data-bs-toggle="collapse" data-bs-target="#apiSettings">
+                    <i class="bi bi-gear"></i> API 设置
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="collapse" id="apiSettings">
+                    <form id="apiConfigForm" class="settings-form">
+                        <div class="mb-3">
+                            <label class="form-label">API 类型</label>
+                            <select class="form-select" name="api_type" id="apiType">
+                                <option value="openai" {% if chat_config and chat_config.api_type == 'openai' %}selected{% endif %}>OpenAI</option>
+                                <option value="azure" {% if chat_config and chat_config.api_type == 'azure' %}selected{% endif %}>Azure OpenAI</option>
+                                <option value="custom" {% if chat_config and chat_config.api_type == 'custom' %}selected{% endif %}>自定义</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">API 密钥</label>
+                            <input type="password" class="form-control" name="api_key" 
+                                   value="{{ chat_config.api_key if chat_config else '' }}"
+                                   required>
+                        </div>
+                        <div class="mb-3" id="endpointField" style="display: {% if chat_config and chat_config.api_type != 'openai' %}block{% else %}none{% endif %}">
+                            <label class="form-label">API 端点 (可选)</label>
+                            <input type="text" class="form-control" name="api_endpoint" 
+                                   value="{{ chat_config.api_endpoint if chat_config else '' }}"
+                                   placeholder="https://api.openai.com/v1">
+                        </div>
+                        <div class="mb-3" id="modelSelectGroup" style="display: {% if chat_config and chat_config.api_type != 'custom' %}block{% else %}none{% endif %}">
+                            <label class="form-label">模型</label>
+                            <select class="form-select" name="model" id="modelSelect">
+                                {% if chat_config and chat_config.api_type == 'openai' %}
+                                <option value="gpt-3.5-turbo" {% if chat_config.model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                                <option value="gpt-4" {% if chat_config.model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                                {% elif chat_config and chat_config.api_type == 'azure' %}
+                                <option value="gpt-35-turbo" {% if chat_config.model == 'gpt-35-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                                <option value="gpt-4" {% if chat_config.model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="mb-3" id="customModelGroup" style="display: {% if chat_config and chat_config.api_type == 'custom' %}block{% else %}none{% endif %}">
+                            <label class="form-label">自定义模型</label>
+                            <input type="text" class="form-control" name="custom_model" 
+                                   value="{{ chat_config.model if chat_config else '' }}">
+                        </div>
+                        <div class="mb-3" id="modelListField" style="display: {% if chat_config and chat_config.api_type == 'custom' %}block{% else %}none{% endif %}">
+                            <label class="form-label">模型列表 (可选)</label>
+                            <input type="text" class="form-control" name="model_list" 
+                                   value="{{ chat_config.model_list if chat_config else '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">保存设置</button>
+                    </form>
+                </div>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <!-- 历史对话列表将通过 JavaScript 动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 主聊天区域 -->
+    <div class="chat-main">
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message text-center">
+                <h3>欢迎使用 AI 助手</h3>
+                <p>请在下方输入您的问题</p>
+            </div>
+        </div>
+        <div class="chat-input">
+            <form id="chatForm" class="d-flex">
+                <textarea class="form-control" id="messageInput" rows="1" 
+                          placeholder="输入消息..." required></textarea>
+                <button type="submit" class="btn btn-primary ms-2">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.chat-container {
+    display: flex;
+    height: calc(100vh - 60px);
+    margin-top: 60px;
+}
+
+.chat-sidebar {
+    width: 300px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.conversations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.conversation-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.conversation-item:hover {
+    background-color: #e9ecef;
+}
+
+.conversation-item.active {
+    background-color: #e9ecef;
+}
+
+.conversation-item .title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.conversation-item .time {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.chat-settings {
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.settings-header {
+    cursor: pointer;
+    padding: 0.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-form {
+    padding-top: 1rem;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.welcome-message {
+    margin-top: 2rem;
+    color: #6c757d;
+}
+
+.chat-input {
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.message {
+    margin-bottom: 1rem;
+    max-width: 80%;
+}
+
+.message.user {
+    margin-left: auto;
+}
+
+.message.assistant {
+    margin-right: auto;
+}
+
+.message-content {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+}
+
+.message.user .message-content {
+    background: #007bff;
+    color: white;
+    border-radius: 1rem 1rem 0 1rem;
+}
+
+.message.assistant .message-content {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 1rem 1rem 1rem 0;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+#messageInput {
+    resize: none;
+    padding-right: 3rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentConversationId = null;
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    loadConversations();
+    setupApiTypeHandler();
+});
+
+// 加载对话列表
+function loadConversations() {
+    fetch('/api/chat/conversations')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const conversationsList = document.getElementById('conversationsList');
+                conversationsList.innerHTML = '';
+                
+                data.conversations.forEach(conv => {
+                    const convDiv = document.createElement('div');
+                    convDiv.className = 'conversation-item';
+                    convDiv.dataset.id = conv.id;
+                    convDiv.innerHTML = `
+                        <div class="title">${conv.title}</div>
+                        <div class="time">${conv.created_at}</div>
+                    `;
+                    convDiv.addEventListener('click', () => loadConversation(conv.id));
+                    conversationsList.appendChild(convDiv);
+                });
+            }
+        });
+}
+
+// 创建新对话
+document.getElementById('newChat').addEventListener('click', function() {
+    fetch('/api/chat/conversation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            title: '新对话'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentConversationId = data.conversation.id;
+            loadConversations();
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="welcome-message text-center">
+                    <h3>新对话已开始</h3>
+                    <p>请在下方输入您的问题</p>
+                </div>
+            `;
+        }
+    });
+});
+
+// 加载对话内容
+function loadConversation(conversationId) {
+    currentConversationId = conversationId;
+    
+    // 更新活动状态
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.id == conversationId) {
+            item.classList.add('active');
+        }
+    });
+    
+    const messagesDiv = document.getElementById('chatMessages');
+    messagesDiv.innerHTML = '';
+    
+    fetch(`/api/chat/history/${conversationId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                data.messages.forEach(msg => {
+                    addMessage(msg.role, msg.content, msg.created_at);
+                });
+            }
+        });
+}
+
+// 处理API类型切换
+function setupApiTypeHandler() {
+    const apiType = document.getElementById('apiType');
+    const endpointField = document.getElementById('endpointField');
+    const modelSelectGroup = document.getElementById('modelSelectGroup');
+    const customModelGroup = document.getElementById('customModelGroup');
+    const modelListField = document.getElementById('modelListField');
+    
+    function updateFields() {
+        const selectedType = apiType.value;
+        
+        if (selectedType === 'openai') {
+            endpointField.style.display = 'none';
+            modelSelectGroup.style.display = 'block';
+            customModelGroup.style.display = 'none';
+            modelListField.style.display = 'none';
+            
+            // 设置 OpenAI 默认模型
+            const modelSelect = document.getElementById('modelSelect');
+            modelSelect.innerHTML = `
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+            `;
+        } 
+        else if (selectedType === 'azure') {
+            endpointField.style.display = 'block';
+            modelSelectGroup.style.display = 'block';
+            customModelGroup.style.display = 'none';
+            modelListField.style.display = 'none';
+            
+            // 设置 Azure 默认模型
+            const modelSelect = document.getElementById('modelSelect');
+            modelSelect.innerHTML = `
+                <option value="gpt-35-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+            `;
+        }
+        else if (selectedType === 'custom') {
+            endpointField.style.display = 'block';
+            modelSelectGroup.style.display = 'none';
+            customModelGroup.style.display = 'block';
+            modelListField.style.display = 'block';
+        }
+    }
+    
+    apiType.addEventListener('change', updateFields);
+    updateFields();
+}
+
+// 处理API设置表单提交
+document.getElementById('apiConfigForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    // 处理自定义模型
+    if (data.api_type === 'custom') {
+        data.model = data.custom_model;
+        delete data.custom_model;
+    }
+    
+    fetch('/api/chat/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('设置已保存');
+        } else {
+            alert('保存失败: ' + data.message);
+        }
+    });
+});
+
+// 添加消息到聊天界面
+function addMessage(role, content, time = null) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    messageDiv.innerHTML = `
+        <div class="message-content">${content}</div>
+        ${time ? `<div class="message-time">${time}</div>` : ''}
+    `;
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// 处理聊天表单提交
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!currentConversationId) {
+        alert('请先创建或选择一个对话');
+        return;
+    }
+    
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // 添加用户消息
+    addMessage('user', message);
+    messageInput.value = '';
+    
+    // 发送消息到服务器
+    fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: message,
+            conversation_id: currentConversationId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addMessage('assistant', data.message);
+        } else {
+            addMessage('assistant', `错误: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        addMessage('assistant', `发送失败: ${error}`);
+    });
+});
+</script>
+{% endblock %}

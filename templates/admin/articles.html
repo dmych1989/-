@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-3">
+            <div class="admin-sidebar">
+                <h4>{{ get_text('admin_panel') }}</h4>
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link" href="{{ url_for('admin') }}">
+                        <i class="bi bi-speedometer2"></i> {{ get_text('dashboard') }}
+                    </a>
+                    <a class="nav-link" href="{{ url_for('admin_users') }}">
+                        <i class="bi bi-people"></i> {{ get_text('user_management') }}
+                    </a>
+                    <a class="nav-link active" href="{{ url_for('admin_articles') }}">
+                        <i class="bi bi-file-text"></i> {{ get_text('article_management') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-9">
+            <div class="admin-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>{{ get_text('article_management') }}</h4>
+                    <a href="{{ url_for('new_article') }}" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> {{ get_text('new_article') }}
+                    </a>
+                </div>
+
+                <!-- 文章列表 -->
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>{{ get_text('title') }}</th>
+                                <th>{{ get_text('author') }}</th>
+                                <th>{{ get_text('category') }}</th>
+                                <th>{{ get_text('views') }}</th>
+                                <th>{{ get_text('status') }}</th>
+                                <th>{{ get_text('actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for article in articles.items %}
+                            <tr>
+                                <td>{{ article.id }}</td>
+                                <td>{{ article.title }}</td>
+                                <td>{{ article.author.username }}</td>
+                                <td>{{ article.category or get_text('uncategorized') }}</td>
+                                <td>{{ article.views }}</td>
+                                <td>
+                                    {% if article.published %}
+                                    <span class="badge bg-success">{{ get_text('published') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">{{ get_text('draft') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('edit_article', id=article.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle({{ article.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% for page in articles.iter_pages() %}
+                            {% if page %}
+                                <li class="page-item {{ 'active' if page == articles.page else '' }}">
+                                    <a class="page-link" href="{{ url_for('admin_articles', page=page) }}">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

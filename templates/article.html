@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <article class="article-detail">
+                <header class="article-header mb-4">
+                    <h1 class="article-title">{{ article.title }}</h1>
+                    <div class="article-meta text-muted">
+                        <span>
+                            <i class="bi bi-person"></i> {{ article.author.username }}
+                        </span>
+                        <span class="ms-3">
+                            <i class="bi bi-clock"></i> {{ article.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </span>
+                        <span class="ms-3">
+                            <i class="bi bi-folder"></i> {{ article.category or '未分类' }}
+                        </span>
+                        {% if article.author_id == current_user.id or current_user.is_admin %}
+                        <a href="{{ url_for('edit_article', id=article.id) }}" class="ms-3 text-decoration-none">
+                            <i class="bi bi-pencil"></i> 编辑
+                        </a>
+                        {% endif %}
+                    </div>
+                </header>
+
+                {% if article.summary %}
+                <div class="article-summary mb-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">摘要</h5>
+                            <p class="card-text">{{ article.summary }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="article-content">
+                    {{ article.content|safe }}
+                </div>
+            </article>
+        </div>
+    </div>
+</div>
+{% endblock %}

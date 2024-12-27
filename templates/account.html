@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="account-page">
+    <div class="row">
+        <!-- 左侧边栏 -->
+        <div class="col-md-3">
+            <div class="account-sidebar">
+                <div class="text-center mb-4">
+                    <div class="avatar-container">
+                        <img src="{{ current_user.avatar or url_for('static', filename='images/default-avatar.png') }}" 
+                             alt="{{ get_text('profile_picture') }}" class="account-avatar">
+                        <button class="btn btn-sm btn-primary change-avatar-btn" title="{{ get_text('update_avatar') }}">
+                            <i class="bi bi-camera"></i>
+                        </button>
+                    </div>
+                    <h4 class="mt-3">{{ current_user.username }}</h4>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                </div>
+                
+                <div class="nav flex-column nav-pills" role="tablist">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#profile">
+                        <i class="bi bi-person-circle me-2"></i>{{ get_text('profile') }}
+                    </button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#security">
+                        <i class="bi bi-shield-lock me-2"></i>{{ get_text('security') }}
+                    </button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#notifications">
+                        <i class="bi bi-bell me-2"></i>{{ get_text('notifications') }}
+                    </button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#activity">
+                        <i class="bi bi-clock-history me-2"></i>{{ get_text('activity') }}
+                    </button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#articles">
+                        <i class="bi bi-file-text me-2"></i>{{ get_text('articles') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- 个人资料 -->
+                <div class="tab-pane fade show active" id="profile">
+                    <div class="content-card">
+                        <h3 class="card-title">{{ get_text('profile') }}</h3>
+                        <form id="profileForm" method="POST" action="{{ url_for('update_profile') }}">
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('username') }}</label>
+                                <input type="text" class="form-control" name="username" value="{{ current_user.username }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('email') }}</label>
+                                <input type="email" class="form-control" name="email" value="{{ current_user.email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('bio') }}</label>
+                                <textarea class="form-control" name="bio" rows="3">{{ current_user.bio }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ get_text('save_changes') }}</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 安全设置 -->
+                <div class="tab-pane fade" id="security">
+                    <div class="content-card">
+                        <h3 class="card-title">{{ get_text('security') }}</h3>
+                        <form id="securityForm" method="POST" action="{{ url_for('update_password') }}">
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('current_password') }}</label>
+                                <input type="password" class="form-control" name="currentPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('new_password') }}</label>
+                                <input type="password" class="form-control" name="newPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ get_text('confirm_password') }}</label>
+                                <input type="password" class="form-control" name="confirmPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ get_text('save_changes') }}</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 通知设置 -->
+                <div class="tab-pane fade" id="notifications">
+                    <div class="content-card">
+                        <h3 class="card-title">{{ get_text('notifications') }}</h3>
+                        <form id="notificationForm" method="POST" action="{{ url_for('update_notifications') }}">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="emailNews" name="emailNews" 
+                                       {% if current_user.email_notifications %}checked{% endif %}>
+                                <label class="form-check-label" for="emailNews">
+                                    {{ get_text('email_notifications') }}
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ get_text('save_changes') }}</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 最近活动 -->
+                <div class="tab-pane fade" id="activity">
+                    <div class="content-card">
+                        <h3 class="card-title">{{ get_text('activity') }}</h3>
+                        <div class="activity-list">
+                            {% for activity in activities %}
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="bi {{ activity.icon }}"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">{{ activity.text }}</p>
+                                    <p class="activity-time">{{ activity.time }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文章管理 -->
+                <div class="tab-pane fade" id="articles">
+                    <div class="content-card">
+                        <h3 class="card-title">{{ get_text('articles') }}</h3>
+                        <div class="article-list">
+                            {% for article in articles %}
+                            <div class="article-item">
+                                <h5>{{ article.title }}</h5>
+                                <div class="article-meta">
+                                    <span><i class="bi bi-calendar"></i> {{ article.date }}</span>
+                                    <span><i class="bi bi-eye"></i> {{ article.views }}</span>
+                                </div>
+                                <div class="article-actions mt-2">
+                                    <a href="{{ url_for('edit_article', id=article.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i> {{ get_text('edit') }}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-container">
+    <!-- 欢迎横幅 -->
+    <div class="welcome-banner">
+        <h1>{{ get_text('welcome') }}</h1>
+        <p class="lead">{{ get_text('site_description') }}</p>
+    </div>
+
+    <!-- 主要功能区 -->
+    <div class="features-grid">
+        <a href="{{ url_for('knowledge') }}" class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-book"></i>
+            </div>
+            <h3>{{ get_text('knowledge_base') }}</h3>
+            <p>{{ get_text('knowledge_description') }}</p>
+        </a>
+
+        <a href="{{ url_for('chat') }}" class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-chat-dots"></i>
+            </div>
+            <h3>{{ get_text('ai_chat') }}</h3>
+            <p>{{ get_text('chat_description') }}</p>
+        </a>
+
+        <a href="{{ url_for('search') }}" class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3>{{ get_text('search_title') }}</h3>
+            <p>{{ get_text('search_description') }}</p>
+        </a>
+
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('account') }}" class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <h3>{{ get_text('account_info') }}</h3>
+            <p>{{ get_text('account_description') }}</p>
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </div>
+            <h3>{{ get_text('login') }}</h3>
+            <p>{{ get_text('login_description') }}</p>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- 最新动态 -->
+    <div class="latest-updates">
+        <h2>{{ get_text('latest_updates') }}</h2>
+        <div class="updates-grid">
+            {% for update in latest_updates %}
+            <div class="update-card">
+                <div class="update-icon">
+                    <i class="bi {{ update.icon }}"></i>
+                </div>
+                <div class="update-content">
+                    <h4>{{ update.title }}</h4>
+                    <p>{{ update.description }}</p>
+                    <small class="text-muted">{{ update.date }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.home-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.welcome-banner {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 3rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.welcome-banner h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+    color: var(--primary-color);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.feature-card p {
+    text-align: center;
+    margin-bottom: 0;
+    color: var(--secondary-color);
+}
+
+.latest-updates {
+    margin-top: 3rem;
+}
+
+.latest-updates h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.updates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.update-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+    border-radius: 1rem;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.update-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-right: 1rem;
+}
+
+.update-content {
+    flex: 1;
+}
+
+.update-content h4 {
+    margin-bottom: 0.5rem;
+}
+
+.update-content p {
+    margin-bottom: 0.5rem;
+    color: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+    .welcome-banner {
+        padding: 2rem;
+    }
+
+    .welcome-banner h1 {
+        font-size: 2rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .updates-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

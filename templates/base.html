@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('language', 'zh') }}" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ get_text('site_name') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-heart-pulse-fill brand-icon"></i>{{ get_text('site_name') }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="bi bi-house-door nav-icon"></i>{{ get_text('home') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('knowledge') }}">
+                            <i class="bi bi-book nav-icon"></i>{{ get_text('knowledge_base') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('chat') }}">
+                            <i class="bi bi-chat-dots nav-icon"></i>{{ get_text('ai_chat') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('about') }}">
+                            <i class="bi bi-info-circle nav-icon"></i>{{ get_text('about') }}
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- 搜索框 -->
+                <div class="search-container">
+                    <form class="d-flex" action="{{ url_for('search') }}" method="GET">
+                        <div class="input-group">
+                            <input type="search" name="q" class="form-control search-input" 
+                                   placeholder="{{ get_text('search_placeholder') }}" aria-label="{{ get_text('search_placeholder') }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 主题切换 -->
+                <div class="theme-switch-wrapper">
+                    <i class="bi bi-sun-fill theme-icon"></i>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="bi bi-moon-fill theme-icon"></i>
+                </div>
+
+                <!-- 语言切换 -->
+                <div class="language-switch dropdown">
+                    <button class="btn btn-link nav-link dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-globe2"></i>
+                        <span class="current-language">{{ {'zh': '中文', 'en': 'English'}.get(session.get('language', 'zh')) }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                        <li>
+                            <a class="dropdown-item {% if session.get('language', 'zh') == 'zh' %}active{% endif %}" 
+                               href="{{ url_for('change_language', lang='zh') }}">
+                                <i class="bi bi-check2 language-check"></i>中文
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {% if session.get('language') == 'en' %}active{% endif %}" 
+                               href="{{ url_for('change_language', lang='en') }}">
+                                <i class="bi bi-check2 language-check"></i>English
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="navbar-nav ms-2">
+                    {% if current_user.is_authenticated %}
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle user-profile-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="{{ current_user.avatar or url_for('static', filename='images/default-avatar.png') }}" 
+                                     alt="{{ get_text('account_info') }}" class="user-avatar">
+                                <span class="user-name">{{ current_user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('account') }}">
+                                        <i class="bi bi-person-circle dropdown-icon"></i>{{ get_text('account_info') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('account') }}#settings">
+                                        <i class="bi bi-gear dropdown-icon"></i>{{ get_text('settings') }}
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                        <i class="bi bi-box-arrow-right dropdown-icon"></i>{{ get_text('logout') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="bi bi-person nav-icon"></i>{{ get_text('login') }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container mt-4">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

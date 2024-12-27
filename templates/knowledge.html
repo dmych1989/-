@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- 侧边栏 -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">文章分类</h5>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('knowledge', category='中医基础') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            中医基础
+                            <span class="badge bg-primary rounded-pill">{{ articles|selectattr('category', 'equalto', '中医基础')|list|length }}</span>
+                        </a>
+                        <a href="{{ url_for('knowledge', category='方剂学') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            方剂学
+                            <span class="badge bg-primary rounded-pill">{{ articles|selectattr('category', 'equalto', '方剂学')|list|length }}</span>
+                        </a>
+                        <a href="{{ url_for('knowledge', category='诊断学') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            诊断学
+                            <span class="badge bg-primary rounded-pill">{{ articles|selectattr('category', 'equalto', '诊断学')|list|length }}</span>
+                        </a>
+                        <a href="{{ url_for('knowledge', category='养生保健') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            养生保健
+                            <span class="badge bg-primary rounded-pill">{{ articles|selectattr('category', 'equalto', '养生保健')|list|length }}</span>
+                        </a>
+                        <a href="{{ url_for('knowledge', category='临床经验') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            临床经验
+                            <span class="badge bg-primary rounded-pill">{{ articles|selectattr('category', 'equalto', '临床经验')|list|length }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文章列表 -->
+        <div class="col-lg-9">
+            <div class="articles">
+                {% for article in articles %}
+                <div class="card mb-4 article-card">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <a href="{{ url_for('view_article', id=article.id) }}" class="text-decoration-none text-dark">
+                                {{ article.title }}
+                            </a>
+                        </h3>
+                        <p class="card-text text-muted">
+                            {% if article.summary %}
+                                {{ article.summary }}
+                            {% else %}
+                                {{ article.content[:200] + '...' if article.content|length > 200 else article.content }}
+                            {% endif %}
+                        </p>
+                        <div class="article-meta">
+                            <span class="badge bg-secondary">{{ article.category or '未分类' }}</span>
+                            <span class="text-muted ms-2">
+                                <i class="bi bi-person"></i> {{ article.author.username }}
+                            </span>
+                            <span class="text-muted ms-2">
+                                <i class="bi bi-clock"></i> {{ article.created_at.strftime('%Y-%m-%d') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-text display-1 text-muted"></i>
+                    <p class="mt-3">暂无文章</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

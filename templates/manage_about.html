@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">管理关于页面</h4>
+            <button type="button" class="btn btn-primary" id="addSection">
+                <i class="bi bi-plus-lg"></i> 添加章节
+            </button>
+        </div>
+        <div class="card-body">
+            <form id="aboutForm">
+                <div id="sections">
+                    {% if about_content %}
+                        {% for section in about_content %}
+                        <div class="section-item mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>章节 {{ loop.index }}</h5>
+                                <button type="button" class="btn btn-danger btn-sm remove-section">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">标题</label>
+                                <input type="text" class="form-control" name="titles[]" 
+                                       value="{{ section.title }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">内容</label>
+                                <textarea class="form-control editor" name="contents[]" 
+                                          rows="10" required>{{ section.content }}</textarea>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> 保存更改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 章节模板 -->
+<template id="sectionTemplate">
+    <div class="section-item mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5>新章节</h5>
+            <button type="button" class="btn btn-danger btn-sm remove-section">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">标题</label>
+            <input type="text" class="form-control" name="titles[]" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">内容</label>
+            <textarea class="form-control editor" name="contents[]" rows="10" required></textarea>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+.section-item {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.note-editor {
+    background: white;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/lang/summernote-zh-CN.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化所有编辑器
+    function initializeEditors() {
+        document.querySelectorAll('.editor').forEach(editor => {
+            if (!$(editor).hasClass('note-editor')) {
+                $(editor).summernote({
+                    lang: 'zh-CN',
+                    height: 300,
+                    toolbar: [
+                        ['style', ['style']],
+                        ['font', ['bold', 'underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link', 'picture']],
+                        ['view', ['fullscreen', 'codeview', 'help']]
+                    ],
+                    callbacks: {
+                        onImageUpload: function(files) {
+                            // 这里可以实现图片上传功能
+                            alert('请先将图片上传到服务器，然后通过URL插入');
+                        }
+                    }
+                });
+            }
+        });
+    }
+    
+    // 初始化现有编辑器
+    initializeEditors();
+    
+    // 添加新章节
+    document.getElementById('addSection').addEventListener('click', function() {
+        const template = document.getElementById('sectionTemplate');
+        const clone = template.content.cloneNode(true);
+        document.getElementById('sections').appendChild(clone);
+        
+        // 初始化新添加的编辑器
+        initializeEditors();
+        
+        // 更新所有章节标题
+        updateSectionTitles();
+    });
+    
+    // 删除章节
+    document.getElementById('sections').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-section')) {
+            const section = e.target.closest('.section-item');
+            section.remove();
+            updateSectionTitles();
+        }
+    });
+    
+    // 更新章节标题
+    function updateSectionTitles() {
+        document.querySelectorAll('.section-item').forEach((section, index) => {
+            section.querySelector('h5').textContent = `章节 ${index + 1}`;
+        });
+    }
+    
+    // 处理表单提交
+    document.getElementById('aboutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const sections = [];
+        const titles = document.getElementsByName('titles[]');
+        const contents = document.querySelectorAll('.editor');
+        
+        for (let i = 0; i < titles.length; i++) {
+            sections.push({
+                title: titles[i].value,
+                content: $(contents[i]).summernote('code')
+            });
+        }
+        
+        fetch('/api/about/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sections: sections })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('保存成功');
+            } else {
+                alert('保存失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('保存失败: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %}

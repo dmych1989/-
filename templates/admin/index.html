@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-3">
+            <div class="admin-sidebar">
+                <h4>{{ get_text('admin_panel') }}</h4>
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link active" href="{{ url_for('admin') }}">
+                        <i class="bi bi-speedometer2"></i> {{ get_text('dashboard') }}
+                    </a>
+                    <a class="nav-link" href="{{ url_for('admin_users') }}">
+                        <i class="bi bi-people"></i> {{ get_text('user_management') }}
+                    </a>
+                    <a class="nav-link" href="{{ url_for('admin_articles') }}">
+                        <i class="bi bi-file-text"></i> {{ get_text('article_management') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-9">
+            <div class="admin-content">
+                <!-- 统计卡片 -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>{{ user_count }}</h3>
+                                <p>{{ get_text('total_users') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-file-text"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>{{ article_count }}</h3>
+                                <p>{{ get_text('total_articles') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-eye"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>{{ total_views }}</h3>
+                                <p>{{ get_text('total_views') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最近活动 -->
+                <div class="recent-activities">
+                    <h5>{{ get_text('recent_activities') }}</h5>
+                    <div class="activity-list">
+                        {% for activity in activities %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="bi {{ activity.icon }}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">{{ activity.text }}</p>
+                                <p class="activity-time">{{ activity.time }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
